@@ -138,13 +138,13 @@ def validate_token():
 
             @bot.event
             async def on_ready():
-                nonlocal is_logged_in
+                global is_logged_in
                 is_logged_in = True
                 print(f"✅ Feather Selfbot Logged In As → {bot.user}")
 
             @bot.command()
             async def help(ctx):
-                await ctx.send("**Feather Selfbot V1.3 is Online**\nUse +menu for commands")
+                await ctx.send("**Feather Selfbot V1.3 is Online**")
 
             bot_loop.run_until_complete(bot.start(token))
         except discord.LoginFailure:
@@ -155,7 +155,7 @@ def validate_token():
     threading.Thread(target=run_bot, daemon=True).start()
     time.sleep(6)
 
-    return jsonify({"success": is_logged_in, "message": "Logged in" if is_logged_in else "Login failed"})
+    return jsonify({"success": is_logged_in, "message": "Logged in" if is_logged_in else "Login failed. Check logs."})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5001))
