@@ -14,7 +14,7 @@ app = Flask(__name__)
 bot = None
 is_logged_in = False
 PREFIX = "+"
-loop = asyncio.new_event_loop()
+bot_loop = asyncio.new_event_loop()
 
 HTML = """
 <!DOCTYPE html>
@@ -29,13 +29,13 @@ HTML = """
     .glass { background: rgba(15,15,20,0.95); backdrop-filter: blur(20px); }
     .shiny { background: linear-gradient(90deg, #ddd, #fff, #ddd); -webkit-background-clip: text; background-clip: text; color: transparent; animation: shine 3s linear infinite; }
     @keyframes shine { 0% { background-position: 200%; } 100% { background-position: -200%; } }
-    .glow { text-shadow: 0 0 20px #22ff88, 0 0 40px #22ff88; }
+    .glow { text-shadow: 0 0 25px #22ff88, 0 0 50px #22ff88; }
   </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
   <div class="max-w-md w-full">
 
-    <!-- Login -->
+    <!-- Login Screen -->
     <div id="login" class="glass rounded-3xl p-8 border border-white/20">
       <h1 class="text-5xl font-bold text-center shiny mb-1">Feather</h1>
       <p class="text-center text-zinc-400 text-xl mb-8">Selfbot V1.3</p>
@@ -54,11 +54,11 @@ HTML = """
       </div>
     </div>
 
-    <!-- Success -->
+    <!-- Success Screen -->
     <div id="success" class="hidden glass rounded-3xl p-10 border border-emerald-500/30 text-center">
-      <div class="text-6xl mb-6">🔑</div>
+      <div class="text-7xl mb-6">🔑</div>
       <h1 class="text-4xl font-bold glow text-emerald-400 mb-2">Congratulations</h1>
-      <h2 class="text-3xl font-semibold mb-6">Welcome To Feather</h2>
+      <h2 class="text-3xl font-semibold mb-8">Welcome To Feather</h2>
       
       <div class="bg-zinc-900/80 border border-emerald-500/20 rounded-2xl p-6 mb-8 space-y-4">
         <p class="text-white text-lg">Your Prefix is <span class="text-emerald-400 font-bold">+</span></p>
@@ -66,7 +66,7 @@ HTML = """
       </div>
 
       <button onclick="logout()" 
-              class="w-full bg-emerald-600 hover:bg-emerald-500 py-4 rounded-2xl font-medium">
+              class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-4 rounded-2xl transition">
         Logout & Restart
       </button>
     </div>
@@ -75,7 +75,7 @@ HTML = """
   <script>
     async function deploy() {
       const token = document.getElementById('token').value.trim();
-      if (!token) return alert("Token enter karo");
+      if (!token) return alert("Please enter your Discord Token");
 
       const btn = document.getElementById('deployBtn');
       btn.innerHTML = "DEPLOYING...";
@@ -93,12 +93,12 @@ HTML = """
           document.getElementById('login').classList.add('hidden');
           document.getElementById('success').classList.remove('hidden');
         } else {
-          alert(data.message || "Invalid or expired token");
+          alert(data.message || "Invalid Token");
           btn.innerHTML = "DEPLOY SELFBOT";
           btn.disabled = false;
         }
       } catch(e) {
-        alert("Connection error. Render logs check karo.");
+        alert("Server Error - Check Render Logs");
         btn.innerHTML = "DEPLOY SELFBOT";
         btn.disabled = false;
       }
@@ -132,7 +132,7 @@ def validate_token():
     def run_bot():
         global bot, is_logged_in
         try:
-            asyncio.set_event_loop(loop)
+            asyncio.set_event_loop(bot_loop)
             intents = discord.Intents.all()
             bot = commands.Bot(command_prefix=PREFIX, self_bot=True, intents=intents, help_command=None)
 
@@ -140,28 +140,22 @@ def validate_token():
             async def on_ready():
                 nonlocal is_logged_in
                 is_logged_in = True
-                print(f"✅ Feather Selfbot Logged In As: {bot.user}")
+                print(f"✅ Feather Selfbot Logged In As → {bot.user}")
 
-            # Commands (basic stable ones)
             @bot.command()
             async def help(ctx):
-                await ctx.send("**Feather Selfbot V1.3 Ready**\n+menu | +ping | +help")
+                await ctx.send("**Feather Selfbot V1.3 is Online**\nUse +menu for commands")
 
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(bot.start(token))
-
+            bot_loop.run_until_complete(bot.start(token))
         except discord.LoginFailure:
             print("❌ Invalid Token")
         except Exception as e:
-            print("Bot Error:", e)
+            print(f"Bot Error: {e}")
 
     threading.Thread(target=run_bot, daemon=True).start()
-    time.sleep(5)   # Wait for login attempt
+    time.sleep(6)
 
-    if is_logged_in:
-        return jsonify({"success": True})
-    else:
-        return jsonify({"success": False, "message": "Login failed. Check token or logs."})
+    return jsonify({"success": is_logged_in, "message": "Logged in" if is_logged_in else "Login failed"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5001))
